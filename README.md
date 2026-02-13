@@ -1,22 +1,37 @@
 # ooSimple-Transpiler
 
-The **ooSimple-Transpiler** is an educational project that takes a custom object-oriented programming language
-(`ooSimple`) and transpiles it into equivalent C code.  
-It is implemented using the ANTLR4 framework and demonstrates the key stages of language processing:
-parsing, semantic analysis with symbol tables, and structured code generation.
+The **ooSimple-Transpiler** is a source-to-source compiler that translates a custom object-oriented programming language (`ooSimple`) into equivalent C code.
 
-Unlike a traditional compiler that outputs machine code, this project focuses on **source-to-source translation**.
-The transpiler allows developers to write in an object-oriented style and obtain readable, valid C programs,
-bridging high-level abstractions with a lower-level language.
+The project is implemented using the ANTLR4 framework and demonstrates a complete language-processing pipeline, including parsing, semantic analysis with scoped symbol tables, and structured C code generation.
 
-Key highlights of this project include:
+Unlike a traditional compiler that targets machine code, this transpiler focuses on transforming high-level object-oriented abstractions into low-level procedural constructs while preserving program semantics. The goal is to make object-oriented behavior explicit within a pure C environment.
 
-- **Custom Object-Oriented Language:** The `ooSimple` language supports classes, methods, inheritance, variables, and control flow constructs.
-- **ANTLR4 Integration:** Grammar-driven parsing using ANTLR4.
-- **Semantic Validation:** Symbol table construction and type checking to ensure correctness.
-- **Readable C Code Output:** Generates understandable C code, making the project ideal for learning both compiler principles and language translation.
+Key highlights of the project include:
 
----
+- **Custom Object-Oriented Language Design**  
+  The `ooSimple` language supports classes, constructors, methods, multiple inheritance, typed variables, control-flow constructs, and structured program entry via a `Main` class.
+
+- **ANTLR4-Based Front-End**  
+  Grammar-driven lexical and syntactic analysis using ANTLR4, producing a parse tree that serves as the foundation for semantic processing.
+
+- **Two-Phase Semantic Processing**  
+  The compiler performs structured tree traversals to construct symbol tables, enforce scope rules, validate inheritance relationships, and perform semantic checks before code generation.
+
+- **Object-Oriented to C Mapping Strategy**  
+  Classes are translated into C `struct` types.  
+  Methods become standalone C functions receiving an explicit `self` pointer.  
+  Constructors allocate and initialize heap-allocated structures.  
+  Multiple inheritance is implemented using explicit parent pointers (`super_*` fields), preserving access to inherited state.
+
+- **Static Method Binding**  
+  Method overriding is resolved during transpilation.  
+  The generated C code does not rely on virtual tables or runtime dispatch; instead, method calls are statically bound during code generation, keeping the output predictable and transparent.
+
+- **Readable and Deterministic C Output**  
+  The produced C programs are human-readable, modular, and suitable for inspection, debugging, or further compilation using a standard C compiler.
+
+This project serves both as a practical demonstration of compiler construction principles and as a study in how object-oriented abstractions can be systematically lowered into procedural code.
+
 
 
 ## ANTLR4 Overview
@@ -189,56 +204,457 @@ The **ooSimple-Transpiler** compiler processes the input `ooSimple` code in a sy
     - Syntax errors are reported during the parsing stage.
     - Semantic errors, such as undeclared variables or type mismatches, are reported during the first and second traversals.
 
-This flow ensures a clear separation of concerns, making the compiler modular, extensible, and easy to debug.
-
-## How to Run the Project
-
-The **ooSimple_Compiler** runs directly using the run_antlr.sh script,
-which automates the compilation of ooSimple files into C. While IntelliJ IDEA was used during development,
-it is not a requirement for running the project.
-
-### Running with the Script
-
-1. **Script Overview**:
-    - The project includes a script named `run_antlr.sh` located in the root directory.
-    - This script automates the compilation process for the `ooSimple` source code.
-
-2. **Usage Instructions**:
-    - Open a terminal and navigate to the root directory of the project.
-    - Run the script using:
-      ```bash
-      ./run_antlr.sh
-      ```
-    - Ensure the script has executable permissions. If not, make it executable:
-      ```bash
-      chmod +x run_antlr.sh
-      ```
-
-3. **Input Path**:
-    - The script allows you to specify the path of the input `ooSimple` file. Update the input path directly within the script or modify it to accept arguments dynamically.
-
-4. **Output Files**:
-    - The generated C files are stored in the `compiler_output` directory within the project.
-    - Ensure this directory exists and has write permissions.
-
-5. **Predefined Input Files**:
-    - The project includes a directory named `input_code_files` that contains ready-to-use `oos` files for testing.
-        - **Subdirectories**:
-            - `happy_day_scenario`: Contains valid `oos` files that compile without errors. Examples:
-                - `Factor.oos`
-                - `MathOperations.oos`
-                - `Vehicle.oos`
-            - `InvalidSyntaxTests`: Contains `oss` files designed to trigger specific syntax and semantic errors, testing the compiler's robustness in error handling.
-                - `undeclaredLocalVariable.oos`
-                - `assigmentDataTypesConflict.oos`
-                - `methodWrongParameterType.oos`
-
-### Additional Notes
-
-- The script leverages the ANTLR4 runtime and ensures all dependencies are configured correctly.
-- It compiles the grammar, processes the input file, and generates C code in one step.
 
 ---
+
+# How to Run the Project
+
+## Requirements
+
+- Java 21 installed
+- Java available in system PATH
+- Bash environment (Linux / macOS / WSL / Git Bash on Windows)
+
+
+## Running the Transpiler
+
+The project is executed through the `run_antlr.sh` script located in the root directory.
+
+```bash
+./run_antlr.sh
+```
+## Input and Output Configuration
+
+The input file is defined in the final command of the `run_antlr.sh` script, where the `.oos` source file is passed as an argument to the `antrl4.Compiler` class. To transpile a different program, simply replace the file path inside the quotation marks with the desired `.oos` file.
+
+The generated C programs are written to the `compiler_output` directory.
+
+---
+
+## Example Program and Generated Output
+
+Below is a sample `ooSimple` program and the corresponding C code produced by the transpiler.
+
+### Input (`Vehicle.oos`)
+
+```text
+class Vehicle:
+    int capacity;
+    int year;
+    ;
+
+    def __init__(self): Vehicle
+        int temp;;
+        temp = 0;
+        self.capacity = temp;
+        self.year = 0;
+        ;
+
+    def __init__(self, int capacity, int year): Vehicle
+        self.capacity = capacity;
+        self.year = year;
+        ;
+
+    def setCapacity(self, int capacity): -
+        self.capacity = capacity;
+        ;
+
+    def setYear(self, int x): -
+        self.year = x;
+        ;
+
+    def getCapacity(self): int
+        return self.capacity;
+        ;
+
+    def getYear(self): int
+        return self.year;
+        ;
+
+
+    def getFieldsSum(self): int
+        return self.capacity + self.year;
+        ;
+
+
+    def equals(self, Vehicle other): int
+        if([self.capacity == other.capacity] and [self.year == other.year]):
+            return 1;
+        else:
+            return 0;
+        endif;
+        ;
+
+
+
+
+class Car inherits Vehicle:
+    int doorsNumber;;
+
+    def __init__(self, int capacity , int year, int doorsNumber): Car
+        self.capacity = capacity;
+        self.year = year;
+        self.doorsNumber = doorsNumber;
+        ;
+
+    def __init__(self,int doorsNumber): Car
+        self.capacity = 0;
+        self.year = 0;
+        self.doorsNumber = doorsNumber;
+            ;
+
+
+    def setDoorsNumber(self, int x): -
+        self.doorsNumber = x;
+        ;
+
+    def getDoorsNumber(self): int
+        return self.doorsNumber;
+        ;
+
+    def getYearAsCar(self): int
+        return self.year;
+        ;
+
+    def setYearAsCar(self, int year): -
+        self.year = year;
+        ;
+
+
+    def getFieldsSum(self): int
+        return self.capacity + self.year + self.doorsNumber;
+        ;
+
+
+
+
+class Buss inherits Vehicle,Car:
+    int ticketPrice;
+    ;
+
+    def __init__(self,int capacity , int year , int doorsNumber, int ticketPrice): Buss
+        self.capacity = capacity;
+        self.year = year;
+        self.doorsNumber = doorsNumber;
+        self.ticketPrice = ticketPrice;
+        ;
+
+
+        def __init__(self,int capacity , int year , int doorsNumber): Buss
+                self.capacity = capacity;
+                self.year = year;
+                self.doorsNumber = doorsNumber;
+                ;
+
+        def __init__(self,int capacity , int ticketPrice): Buss
+            self.ticketPrice = 0;
+            self.ticketPrice = ticketPrice;
+            self.capacity = 0;
+            self.doorsNumber = 1 - 1;
+            ;
+
+
+        def getFieldsSum(self): int
+            return self.capacity + self.year + self.doorsNumber + self.ticketPrice;
+            ;
+
+        def setTicketPrice(self, int newPrice): -
+            self.ticketPrice = newPrice;
+            ;
+
+
+        def getTicketPrice(self): int
+            return self.ticketPrice;
+            ;
+
+
+
+
+
+
+
+####################################
+
+
+class Main:
+    def main(self): -
+        Vehicle v0, v1;
+        Car c1;
+        Buss b1;
+        int x;
+        ;
+
+        v0 = Vehicle();
+        print "v0 Capacity : ";
+        print v0.getCapacity();
+        print "v0 Year : ";
+        print v0.getYear();
+
+        v1 = Vehicle(7,1997);
+        print "v1 Capacity : ";
+        print v1.getCapacity();
+        print "v1 Year : ";
+        print v1.getYear();
+
+        v1.setCapacity(10);
+        v1.setYear(2003);
+        print "v1 Capacity : ";
+        print v1.getCapacity();
+        print "v1 Year : ";
+        print v1.getYear();
+
+        c1 = Car(2,2018,3);
+        print "Get year as vehicle : ";
+        print c1.getYear();
+        print "Get year as car : ";
+        print c1.getYearAsCar();
+
+        c1.setYear(1945);
+        c1.setYearAsCar(2000);
+
+        print "Get fields Sum. Should override vehicle : ";
+        print c1.getFieldsSum();
+
+
+        b1 = Buss(80,2024,3,5);
+        print "Buss capacity :  year:   doorsNumber:    ticketPrice:    \n";
+        print  b1.getCapacity(), b1.getYear(), b1.getDoorsNumber(), b1.getTicketPrice();
+
+
+       print b1.getFieldsSum();
+
+       b1.setDoorsNumber(1);
+       print b1.getDoorsNumber();
+
+       print b1.equals(v1);
+
+       x = b1.getCapacity() + b1.getYear() + b1.getDoorsNumber() + b1.getTicketPrice();
+       ;
+```
+
+## Generated C Output (`Vehicle.c`)
+
+This example demonstrates the transformation of an object-oriented `ooSimple` program (`Vehicle.oos`) into equivalent C code (`Vehicle.c`).
+
+Classes are translated into C `struct` types, methods become standalone C functions receiving an explicit `self` pointer, and inheritance is implemented through explicit parent pointers (`super_*` fields).
+
+Inheritance is implemented using explicit parent pointers (`super_*` fields).
+Each derived structure dynamically allocates and maintains pointers to its parent structures, enabling access to inherited fields while preserving the hierarchical relationships defined in the original object-oriented design.
+
+The transpiler supports multiple inheritance by maintaining separate parent pointers for each inherited class.
+
+```text
+#include <stdio.h>
+#include <stdlib.h>
+
+//Structs declaration
+typedef struct Vehicle {
+	int year;
+	int capacity;
+} Vehicle;
+
+typedef struct Car {
+	Vehicle* super_1;
+	int doorsNumber;
+} Car;
+
+typedef struct Buss {
+	Vehicle* super_1;
+	Car* super_2;
+	int ticketPrice;
+} Buss;
+
+
+//Methods Declarations
+Vehicle* Vehicle_Constructor();
+Vehicle* Vehicle_Constructor_int_int(int, int);
+void setCapacity_Vehicle_int(Vehicle*, int);
+void setYear_Vehicle_int(Vehicle*, int);
+int getCapacity_Vehicle(Vehicle*);
+int getYear_Vehicle(Vehicle*);
+int getFieldsSum_Vehicle(Vehicle*);
+int equals_Vehicle_Vehicle(Vehicle*, Vehicle*);
+Car* Car_Constructor_int_int_int(int, int, int);
+Car* Car_Constructor_int(int);
+void setDoorsNumber_Car_int(Car*, int);
+int getDoorsNumber_Car(Car*);
+int getYearAsCar_Car(Car*);
+void setYearAsCar_Car_int(Car*, int);
+int getFieldsSum_Car(Car*);
+Buss* Buss_Constructor_int_int_int_int(int, int, int, int);
+Buss* Buss_Constructor_int_int_int(int, int, int);
+Buss* Buss_Constructor_int_int(int, int);
+int getFieldsSum_Buss(Buss*);
+void setTicketPrice_Buss_int(Buss*, int);
+int getTicketPrice_Buss(Buss*);
+
+int main(void){
+	int x;
+	Vehicle* v0;
+	Vehicle* v1;
+	Car* c1;
+	Buss* b1;
+	v0 = Vehicle_Constructor();
+	printf("v0 Capacity : ");
+	printf("%d""\n", getCapacity_Vehicle(v0));
+	printf("v0 Year : ");
+	printf("%d""\n", getYear_Vehicle(v0));
+	v1 = Vehicle_Constructor_int_int(7, 1997);
+	printf("v1 Capacity : ");
+	printf("%d""\n", getCapacity_Vehicle(v1));
+	printf("v1 Year : ");
+	printf("%d""\n", getYear_Vehicle(v1));
+	setCapacity_Vehicle_int(v1,10);
+	setYear_Vehicle_int(v1,2003);
+	printf("v1 Capacity : ");
+	printf("%d""\n", getCapacity_Vehicle(v1));
+	printf("v1 Year : ");
+	printf("%d""\n", getYear_Vehicle(v1));
+	c1 = Car_Constructor_int_int_int(2, 2018, 3);
+	printf("Get year as vehicle : ");
+	printf("%d""\n", getYear_Vehicle(c1->super_1));
+	printf("Get year as car : ");
+	printf("%d""\n", getYearAsCar_Car(c1));
+	setYear_Vehicle_int(c1->super_1,1945);
+	setYearAsCar_Car_int(c1,2000);
+	printf("Get fields Sum. Should override vehicle : ");
+	printf("%d""\n", getFieldsSum_Car(c1));
+	b1 = Buss_Constructor_int_int_int_int(80, 2024, 3, 5);
+	printf("Buss capacity :  year:   doorsNumber:    ticketPrice:    \n");
+	printf("%d"" %d"" %d"" %d""\n", getCapacity_Vehicle(b1->super_1) ,getYear_Vehicle(b1->super_1) ,getDoorsNumber_Car(b1->super_2) ,getTicketPrice_Buss(b1));
+	printf("%d""\n", getFieldsSum_Buss(b1));
+	setDoorsNumber_Car_int(b1->super_2,1);
+	printf("%d""\n", getDoorsNumber_Car(b1->super_2));
+	printf("%d""\n", equals_Vehicle_Vehicle(b1->super_1,v1));
+	x = getCapacity_Vehicle(b1->super_1) + getYear_Vehicle(b1->super_1) + getDoorsNumber_Car(b1->super_2) + getTicketPrice_Buss(b1);
+	return 0;
+}
+
+//Constructors Implementations
+Vehicle* Vehicle_Constructor(){
+	Vehicle* str_ = (Vehicle*) malloc(sizeof(Vehicle));
+	int temp;
+	temp = 0;
+	str_->capacity = temp;
+	str_->year = 0;
+	return str_;
+}
+Vehicle* Vehicle_Constructor_int_int(int capacity, int year){
+	Vehicle* str_ = (Vehicle*) malloc(sizeof(Vehicle));
+	str_->capacity = capacity;
+	str_->year = year;
+	return str_;
+}
+Car* Car_Constructor_int_int_int(int capacity, int year, int doorsNumber){
+	Car* str_ = (Car*) malloc(sizeof(Car));
+	str_->super_1 = (Vehicle*) malloc(sizeof(Vehicle));
+	str_->super_1->capacity = capacity;
+	str_->super_1->year = year;
+	str_->doorsNumber = doorsNumber;
+	return str_;
+}
+Car* Car_Constructor_int(int doorsNumber){
+	Car* str_ = (Car*) malloc(sizeof(Car));
+	str_->super_1 = (Vehicle*) malloc(sizeof(Vehicle));
+	str_->super_1->capacity = 0;
+	str_->super_1->year = 0;
+	str_->doorsNumber = doorsNumber;
+	return str_;
+}
+Buss* Buss_Constructor_int_int_int_int(int capacity, int year, int doorsNumber, int ticketPrice){
+	Buss* str_ = (Buss*) malloc(sizeof(Buss));
+	str_->super_1 = (Vehicle*) malloc(sizeof(Vehicle));
+	str_->super_2 = (Car*) malloc(sizeof(Car));
+	str_->super_1->capacity = capacity;
+	str_->super_1->year = year;
+	str_->super_2->doorsNumber = doorsNumber;
+	str_->ticketPrice = ticketPrice;
+	return str_;
+}
+Buss* Buss_Constructor_int_int_int(int capacity, int year, int doorsNumber){
+	Buss* str_ = (Buss*) malloc(sizeof(Buss));
+	str_->super_1 = (Vehicle*) malloc(sizeof(Vehicle));
+	str_->super_2 = (Car*) malloc(sizeof(Car));
+	str_->super_1->capacity = capacity;
+	str_->super_1->year = year;
+	str_->super_2->doorsNumber = doorsNumber;
+	return str_;
+}
+Buss* Buss_Constructor_int_int(int capacity, int ticketPrice){
+	Buss* str_ = (Buss*) malloc(sizeof(Buss));
+	str_->super_1 = (Vehicle*) malloc(sizeof(Vehicle));
+	str_->super_2 = (Car*) malloc(sizeof(Car));
+	str_->ticketPrice = 0;
+	str_->ticketPrice = ticketPrice;
+	str_->super_1->capacity = 0;
+	str_->super_2->doorsNumber = 1 - 1;
+	return str_;
+}
+
+//Methods Implementations
+void setCapacity_Vehicle_int(Vehicle* str_, int capacity){
+	str_->capacity = capacity;
+}
+
+void setYear_Vehicle_int(Vehicle* str_, int x){
+	str_->year = x;
+}
+
+int getCapacity_Vehicle(Vehicle* str_){
+	return str_->capacity;
+}
+
+int getYear_Vehicle(Vehicle* str_){
+	return str_->year;
+}
+
+int getFieldsSum_Vehicle(Vehicle* str_){
+	return str_->capacity + str_->year;
+}
+
+int equals_Vehicle_Vehicle(Vehicle* str_, Vehicle* other){
+	if((str_->capacity == other->capacity) && (str_->year == other->year)){
+		return 1;
+	}else {
+		return 0;
+	};
+}
+
+void setDoorsNumber_Car_int(Car* str_, int x){
+	str_->doorsNumber = x;
+}
+
+int getDoorsNumber_Car(Car* str_){
+	return str_->doorsNumber;
+}
+
+int getYearAsCar_Car(Car* str_){
+	return str_->super_1->year;
+}
+
+void setYearAsCar_Car_int(Car* str_, int year){
+	str_->super_1->year = year;
+}
+
+int getFieldsSum_Car(Car* str_){
+	return str_->super_1->capacity + str_->super_1->year + str_->doorsNumber;
+}
+
+int getFieldsSum_Buss(Buss* str_){
+	return str_->super_1->capacity + str_->super_1->year + str_->super_2->doorsNumber + str_->ticketPrice;
+}
+
+void setTicketPrice_Buss_int(Buss* str_, int newPrice){
+	str_->ticketPrice = newPrice;
+}
+
+int getTicketPrice_Buss(Buss* str_){
+	return str_->ticketPrice;
+}
+```
+
+---
+
 ## 👤 Author
 
 > GitHub: [xrddev](https://github.com/xrddev)
